@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { SessionPayload } from "@/app/lib/storage/sessionStore";
 
+export const runtime = "nodejs";
+
+// Keep your prompt (you can replace it later with the bigger Analyst one)
 const SYSTEM_PROMPT = `You are Inshight Analyst, an AI assistant that analyzes user behavior data from Inshight sessions.
 
 Your role:
@@ -22,6 +25,23 @@ Provide your analysis as:
 
 Be specific about timestamps when referring to moments. If snapshots are available, reference them by timestamp.`;
 
+function stripHeavyFields(session: SessionPayload) {
+  // Avoid sending full base64 images to Gemini for now (keeps request small + reliable)
+  return {
+    mode: session.mode || "activity",
+    startedAt: session.startedAt,
+    events: session.events || [],
+    points: (session.points || []).slice(-120), // last 2 minutes of points (adjust as needed)
+    snapshots: (session.snapshots || []).map((s) => ({
+      imageId: s.imageId,
+      t: s.t,
+      kind: s.kind,
+      label: s.label,
+      dataUrlPrefix: s.dataUrl?.slice(0, 40) + "...",
+    })),
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -37,77 +57,61 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: "OPENAI_API_KEY environment variable not set" },
+        { error: "GEMINI_API_KEY environment variable not set" },
         { status: 500 }
       );
     }
 
-    // Prepare session summary for the model
-    const sessionSummary = {
-      mode: session.mode || "task",
-      startedAt: session.startedAt,
-      totalPoints: session.points?.length || 0,
-      totalSnapshots: session.snapshots?.length || 0,
-      events: session.events,
-      samplePoints: session.points?.slice(0, 10), // First 10 points as sample
-      snapshotIds: session.snapshots?.map((s) => ({ imageId: s.imageId, t: s.t })) || [],
-    };
+    const safeSession = stripHeavyFields(session);
 
     const userContent = `Session Data:
-${JSON.stringify(sessionSummary, null, 2)}
+${JSON.stringify(safeSession, null, 2)}
 
 User Question: ${user_question}
 
 Please analyze this Inshight session data and answer the user's question. Provide insights about engagement patterns, emotional states, confusion moments, and any notable behaviors.`;
 
-    // Call OpenAI API
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+    const response = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "gpt-4o-mini", // Using cost-effective model
-        messages: [
-          {
-            role: "system",
-            content: SYSTEM_PROMPT,
-          },
+        contents: [
           {
             role: "user",
-            content: userContent,
+            parts: [{ text: SYSTEM_PROMPT }, { text: userContent }],
           },
         ],
-        temperature: 0.7,
-        max_tokens: 2000,
+        generationConfig: {
+          temperature: 0.6,
+          maxOutputTokens: 1200,
+        },
       }),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error("OpenAI API error:", errorData);
+      const errText = await response.text();
+      console.error("Gemini API error:", errText);
       return NextResponse.json(
-        {
-          error: `OpenAI API error: ${errorData.error?.message || response.statusText}`,
-        },
+        { error: `Gemini API error: ${errText}` },
         { status: response.status }
       );
     }
 
     const data = await response.json();
-    const result = data.choices?.[0]?.message?.content || "No response from AI.";
+    const result =
+      data?.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join("") ||
+      "No response from Gemini.";
 
     return NextResponse.json({ result });
-  } catch (error) {
+  } catch (error: any) {
     console.error("API route error:", error);
     return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Internal server error",
-      },
+      { error: error?.message || "Internal server error" },
       { status: 500 }
     );
   }
