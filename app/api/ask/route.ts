@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { SessionPayload } from "@/app/lib/storage/sessionStore";
 
+export const runtime = "nodejs";
+
 const SYSTEM_PROMPT = `You are Inshight Analyst, an AI assistant that analyzes user behavior data from Inshight sessions.
 
 Your role:
@@ -30,6 +32,108 @@ Provide your analysis as:
 
 Be specific about timestamps when referring to moments. Always reference snapshot content when explaining emotional reactions.`;
 
+async function callOpenAI(apiKey: string, userContent: string): Promise<NextResponse> {
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: userContent },
+      ],
+      temperature: 0.7,
+      max_tokens: 2000,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    console.error("OpenAI API error:", errorData);
+    return NextResponse.json(
+      { error: `OpenAI API error: ${errorData.error?.message || response.statusText}` },
+      { status: response.status }
+    );
+  }
+
+  const data = await response.json();
+  const result = data.choices?.[0]?.message?.content || "No response from AI.";
+  return NextResponse.json({ result, provider: "openai" });
+}
+
+async function callGemini(geminiKey: string, session: SessionPayload, userContent: string): Promise<NextResponse> {
+  // IMPORTANT: Use v1 + configurable model (fixes Vercel calling old v1beta/1.5-flash)
+  const geminiVersion = process.env.GEMINI_API_VERSION || "v1";
+  const geminiModel = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+
+  const url =
+    `https://generativelanguage.googleapis.com/${geminiVersion}` +
+    `/models/${geminiModel}:generateContent?key=${geminiKey}`;
+
+  // Gemini can do vision. Include up to 5 snapshots to keep payload reasonable.
+  const parts: any[] = [{ text: `${SYSTEM_PROMPT}\n\n${userContent}` }];
+
+  if (session.snapshots && session.snapshots.length > 0) {
+    for (const snapshot of session.snapshots.slice(0, 5)) {
+      if (!snapshot.dataUrl) continue;
+
+      const base64Data = snapshot.dataUrl.split(",")[1] || "";
+      if (!base64Data) continue;
+
+      parts.push({
+        inline_data: {
+          mime_type: "image/jpeg",
+          data: base64Data,
+        },
+      });
+      parts.push({
+        text: `Snapshot at ${snapshot.t}s (${snapshot.imageId}): This image was captured when the user showed confusion or low engagement. Describe what is visible on screen and connect it to the user's signals.`,
+      });
+    }
+  }
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ role: "user", parts }],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 2048,
+      },
+    }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    console.error("Gemini API error:", data);
+    const msg = data?.error?.message || response.statusText || "Unknown Gemini error";
+    return NextResponse.json(
+      {
+        error: `Gemini API error: ${msg}`,
+        debug: { geminiVersion, geminiModel },
+      },
+      { status: response.status }
+    );
+  }
+
+  const result =
+    data?.candidates?.[0]?.content?.parts
+      ?.map((p: any) => p?.text)
+      .filter(Boolean)
+      .join("\n") || "No response from AI.";
+
+  return NextResponse.json({
+    result,
+    provider: "gemini",
+    debug: { geminiVersion, geminiModel },
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -52,8 +156,10 @@ export async function POST(request: NextRequest) {
     if (!geminiKey && !openaiKey) {
       return NextResponse.json(
         {
-          error: "No AI API key found. Please set GEMINI_API_KEY or OPENAI_API_KEY in your environment variables.",
-          hint: "For local development, create a .env.local file. For Vercel, add environment variables in the dashboard.",
+          error:
+            "No AI API key found. Please set GEMINI_API_KEY or OPENAI_API_KEY in your environment variables.",
+          hint:
+            "Local: create .env.local. Vercel: Project Settings → Environment Variables. Remember to redeploy after changes.",
         },
         { status: 500 }
       );
@@ -67,15 +173,14 @@ export async function POST(request: NextRequest) {
       totalPoints: session.points?.length || 0,
       totalSnapshots: session.snapshots?.length || 0,
       events: session.events,
-      // Include all points for better analysis (not just sample)
       points: session.points || [],
-      // Include snapshot metadata (full data URLs for Gemini vision)
-      snapshots: session.snapshots?.map((s) => ({
-        imageId: s.imageId,
-        t: s.t,
-        label: s.label,
-        hasImage: !!s.dataUrl, // Indicate if image data is available
-      })) || [],
+      snapshots:
+        session.snapshots?.map((s) => ({
+          imageId: s.imageId,
+          t: s.t,
+          label: s.label,
+          hasImage: !!s.dataUrl,
+        })) || [],
     };
 
     const userContent = `Session Data:
@@ -87,108 +192,24 @@ Please analyze this Inshight session data and answer the user's question. Provid
 
 IMPORTANT: If snapshots are available, analyze what content was on screen during confusion/engagement moments to explain why the user felt that way.`;
 
-    // Use Gemini if available, otherwise OpenAI
+    // Prefer Gemini if available, else OpenAI
     if (geminiKey) {
-      // Gemini supports vision, so we'll include snapshot images
-      const parts: any[] = [{ text: `${SYSTEM_PROMPT}\n\n${userContent}` }];
-      
-      // Add snapshot images to Gemini request (first 5 to stay within token limits)
-      if (session.snapshots && session.snapshots.length > 0) {
-        for (const snapshot of session.snapshots.slice(0, 5)) {
-          if (snapshot.dataUrl) {
-            // Convert data URL to base64
-            const base64Data = snapshot.dataUrl.split(',')[1];
-            parts.push({
-              inline_data: {
-                mime_type: "image/jpeg",
-                data: base64Data,
-              },
-            });
-            parts.push({
-              text: `Snapshot at ${snapshot.t}s (${snapshot.imageId}): This image was captured when the user showed confusion or low engagement. Analyze what content was visible and how it relates to their emotional state.`,
-            });
-          }
-        }
+      const geminiRes = await callGemini(geminiKey, session, userContent);
+
+      // If Gemini fails and we have OpenAI, fallback automatically
+      if (geminiRes.status >= 400 && openaiKey) {
+        return callOpenAI(openaiKey, userContent);
       }
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts }],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 2048,
-            },
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("Gemini API error:", errorData);
-        // Fallback to OpenAI if Gemini fails
-        if (openaiKey) {
-          return callOpenAI(openaiKey, userContent);
-        }
-        return NextResponse.json(
-          {
-            error: `Gemini API error: ${errorData.error?.message || response.statusText}`,
-          },
-          { status: response.status }
-        );
-      }
-
-      const data = await response.json();
-      const result = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response from AI.";
-      
-      return NextResponse.json({ result });
-    } else {
-      // Fallback to OpenAI
-      return callOpenAI(openaiKey!, userContent);
+      return geminiRes;
     }
 
-    async function callOpenAI(apiKey: string, content: string): Promise<NextResponse> {
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content },
-          ],
-          temperature: 0.7,
-          max_tokens: 2000,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("OpenAI API error:", errorData);
-        return NextResponse.json(
-          {
-            error: `OpenAI API error: ${errorData.error?.message || response.statusText}`,
-          },
-          { status: response.status }
-        );
-      }
-
-      const data = await response.json();
-      const result = data.choices?.[0]?.message?.content || "No response from AI.";
-      return NextResponse.json({ result });
-    }
+    // Fallback to OpenAI
+    return callOpenAI(openaiKey!, userContent);
   } catch (error) {
     console.error("API route error:", error);
     return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Internal server error",
-      },
+      { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
     );
   }
