@@ -1,132 +1,217 @@
 "use client";
 
 import Link from "next/link";
+import { design } from "./lib/design/styles";
 
 export default function LandingPage() {
+  const heroStyle: React.CSSProperties = {
+    background: design.gradients.subtle,
+    padding: `${design.spacing.xxxl} ${design.spacing.xl}`,
+    textAlign: "center",
+    maxWidth: "900px",
+    margin: "0 auto",
+  };
+
+  const headingStyle: React.CSSProperties = {
+    ...design.typography.h1,
+    color: design.colors.text,
+    marginBottom: design.spacing.lg,
+    background: design.gradients.primary,
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+    backgroundClip: "text",
+  };
+
+  const subtitleStyle: React.CSSProperties = {
+    ...design.typography.bodyLarge,
+    color: design.colors.textSecondary,
+    marginBottom: design.spacing.xxl,
+    maxWidth: "700px",
+    margin: `0 auto ${design.spacing.xxl} auto`,
+    lineHeight: 1.7,
+  };
+
+  const ctaContainerStyle: React.CSSProperties = {
+    display: "flex",
+    gap: design.spacing.md,
+    justifyContent: "center",
+    flexWrap: "wrap",
+    marginBottom: design.spacing.xxxl,
+  };
+
+  const buttonPrimaryStyle: React.CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "16px 32px",
+    backgroundColor: design.colors.primary,
+    color: "#ffffff",
+    borderRadius: design.radius.md,
+    textDecoration: "none",
+    fontWeight: 600,
+    fontSize: "16px",
+    cursor: "pointer",
+    transition: design.animation.normal,
+    border: "none",
+    boxShadow: design.shadow.md,
+  };
+
+  const buttonSecondaryStyle: React.CSSProperties = {
+    ...buttonPrimaryStyle,
+    backgroundColor: "#ffffff",
+    color: design.colors.primary,
+    border: `1px solid ${design.colors.border}`,
+    boxShadow: design.shadow.sm,
+  };
+
+  const sectionStyle: React.CSSProperties = {
+    padding: `${design.spacing.xxxl} ${design.spacing.xl}`,
+    maxWidth: "1200px",
+    margin: "0 auto",
+  };
+
+  const cardStyle: React.CSSProperties = {
+    backgroundColor: design.colors.surface,
+    border: `1px solid ${design.colors.border}`,
+    borderRadius: design.radius.lg,
+    padding: design.spacing.xl,
+    boxShadow: design.shadow.sm,
+    marginBottom: design.spacing.xl,
+  };
+
+  const gridStyle: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+    gap: design.spacing.xl,
+    marginTop: design.spacing.xl,
+  };
+
   return (
-    <main
-      style={{
-        padding: 48,
-        fontFamily: "system-ui",
-        maxWidth: 900,
-        margin: "0 auto",
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        backgroundColor: "#ffffff",
-        color: "#000000",
-      }}
-    >
-      <h1 style={{ fontSize: 48, fontWeight: 800, marginBottom: 16, color: "#000" }}>
-        Inshight
-      </h1>
-      <p style={{ fontSize: 20, opacity: 0.8, marginBottom: 24, lineHeight: 1.6, color: "#000" }}>
-        Replace "taking a survey" with invisible feedback collected during a short task.
-        Instead of asking "Did you like this?", we capture real reactions: attention,
-        engagement, micro-expressions, and more.
-      </p>
+    <main style={{ backgroundColor: design.colors.background }}>
+      {/* Hero Section */}
+      <section style={heroStyle}>
+        <h1 style={headingStyle}>GetInsight</h1>
+        <p style={subtitleStyle}>
+          Replace surveys with invisible feedback. Capture real reactions during tasks using webcam
+          signals — attention, engagement, micro-expressions, and more. Zero form-filling required.
+        </p>
 
-      <div style={{ marginTop: 32, marginBottom: 24, display: "flex", gap: 12, flexWrap: "wrap" }}>
-        <Link
-          href="/session"
-          style={{
-            display: "inline-block",
-            padding: "16px 32px",
-            backgroundColor: "#000",
-            color: "#fff",
-            borderRadius: 12,
-            textDecoration: "none",
-            fontWeight: 600,
-            fontSize: 18,
-            cursor: "pointer",
-          }}
-        >
-          Start Session →
-        </Link>
-        <Link
-          href="/activity"
-          style={{
-            display: "inline-block",
-            padding: "16px 32px",
-            backgroundColor: "#000",
-            color: "#fff",
-            borderRadius: 12,
-            textDecoration: "none",
-            fontWeight: 600,
-            fontSize: 18,
-            cursor: "pointer",
-          }}
-        >
-          Activity Tracking →
-        </Link>
-        <Link
-          href="/ask"
-          style={{
-            display: "inline-block",
-            padding: "16px 32px",
-            backgroundColor: "#000",
-            color: "#fff",
-            borderRadius: 12,
-            textDecoration: "none",
-            fontWeight: 600,
-            fontSize: 18,
-            cursor: "pointer",
-          }}
-        >
-          Ask AI →
-        </Link>
-      </div>
+        <div style={ctaContainerStyle}>
+          <Link
+            href="/activity"
+            style={buttonPrimaryStyle}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = design.colors.primaryHover;
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = design.shadow.lg;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = design.colors.primary;
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = design.shadow.md;
+            }}
+          >
+            Start Demo →
+          </Link>
+          <Link
+            href="/report"
+            style={buttonSecondaryStyle}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = design.colors.surface;
+              e.currentTarget.style.transform = "translateY(-2px)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#ffffff";
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            View Report
+          </Link>
+          <Link
+            href="/ask"
+            style={buttonSecondaryStyle}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = design.colors.surface;
+              e.currentTarget.style.transform = "translateY(-2px)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#ffffff";
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            Ask AI
+          </Link>
+        </div>
+      </section>
 
-      <div
-        style={{
-          marginTop: 48,
-          padding: 24,
-          border: "1px solid #eee",
-          borderRadius: 12,
-          backgroundColor: "#fafafa",
-        }}
-      >
-        <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16, color: "#000" }}>
-          How it works
+      {/* How It Works */}
+      <section style={sectionStyle}>
+        <h2 style={{ ...design.typography.h2, textAlign: "center", marginBottom: design.spacing.xl, color: design.colors.text }}>
+          How It Works
         </h2>
-        <ol style={{ paddingLeft: 20, lineHeight: 1.8, color: "#000" }}>
-          <li>
-            <strong>Task replaces Survey:</strong> Watch a short clip (ad/product/video) —
-            that&apos;s the stimulus.
-          </li>
-          <li>
-            <strong>Continuous sensing:</strong> While watching, we record signals from your
-            webcam (face presence, gaze direction, expressions).
-          </li>
-          <li>
-            <strong>Automatic report:</strong> Signals are converted into satisfaction scores,
-            tone, and insights — like SurveyMonkey, but automatic.
-          </li>
-          <li>
-            <strong>Ask only when needed:</strong> If signals are ambiguous, we show one
-            micro-question. Otherwise, you&apos;re done — zero form-filling.
-          </li>
-        </ol>
-      </div>
+        <div style={gridStyle}>
+          <div style={cardStyle}>
+            <div style={{ fontSize: "32px", marginBottom: design.spacing.md }}>🎯</div>
+            <h3 style={{ ...design.typography.h4, marginBottom: design.spacing.sm, color: design.colors.text }}>
+              Task replaces Survey
+            </h3>
+            <p style={{ ...design.typography.body, color: design.colors.textSecondary, margin: 0 }}>
+              Watch a short clip or interact with content — that&apos;s the stimulus. No forms, no questions.
+            </p>
+          </div>
+          <div style={cardStyle}>
+            <div style={{ fontSize: "32px", marginBottom: design.spacing.md }}>📊</div>
+            <h3 style={{ ...design.typography.h4, marginBottom: design.spacing.sm, color: design.colors.text }}>
+              Continuous Sensing
+            </h3>
+            <p style={{ ...design.typography.body, color: design.colors.textSecondary, margin: 0 }}>
+              While you watch, we record signals from your webcam: face presence, gaze direction, expressions, and engagement.
+            </p>
+          </div>
+          <div style={cardStyle}>
+            <div style={{ fontSize: "32px", marginBottom: design.spacing.md }}>✨</div>
+            <h3 style={{ ...design.typography.h4, marginBottom: design.spacing.sm, color: design.colors.text }}>
+              Automatic Report
+            </h3>
+            <p style={{ ...design.typography.body, color: design.colors.textSecondary, margin: 0 }}>
+              Signals are converted into satisfaction scores, tone, and insights — like SurveyMonkey, but automatic.
+            </p>
+          </div>
+        </div>
+      </section>
 
-      <div style={{ marginTop: 32, opacity: 0.6, fontSize: 14, color: "#000" }}>
-        <Link href="/session" style={{ color: "#000", textDecoration: "underline" }}>
-          Start Session
-        </Link>{" "}
-        •{" "}
-        <Link href="/activity" style={{ color: "#000", textDecoration: "underline" }}>
-          Activity Tracking
-        </Link>{" "}
-        •{" "}
-        <Link href="/ask" style={{ color: "#000", textDecoration: "underline" }}>
-          Ask AI
-        </Link>{" "}
-        •{" "}
-        <Link href="/report" style={{ color: "#000", textDecoration: "underline" }}>
-          View Report
-        </Link>
-      </div>
+      {/* Why It Matters */}
+      <section style={{ ...sectionStyle, backgroundColor: design.colors.surface }}>
+        <h2 style={{ ...design.typography.h2, textAlign: "center", marginBottom: design.spacing.xl, color: design.colors.text }}>
+          Why It Matters
+        </h2>
+        <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+          <div style={cardStyle}>
+            <ul style={{ margin: 0, paddingLeft: "24px", color: design.colors.textSecondary }}>
+              <li style={{ marginBottom: design.spacing.md, ...design.typography.body }}>
+                <strong style={{ color: design.colors.text }}>Surveys feel like work.</strong> GetInsight turns feedback into
+                something that happens while you&apos;re already watching or doing something — zero friction.
+              </li>
+              <li style={{ marginBottom: 0, ...design.typography.body }}>
+                <strong style={{ color: design.colors.text }}>Real reactions over self-reporting.</strong> Capture genuine
+                engagement, confusion, and emotion without asking leading questions.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* Privacy & Ethics */}
+      <section style={sectionStyle}>
+        <div style={{ ...cardStyle, maxWidth: "700px", margin: "0 auto", textAlign: "center" }}>
+          <h3 style={{ ...design.typography.h3, marginBottom: design.spacing.md, color: design.colors.text }}>
+            Privacy & Ethics
+          </h3>
+          <p style={{ ...design.typography.body, color: design.colors.textSecondary, margin: 0 }}>
+            All processing happens locally in your browser. No video is uploaded, no data is stored on our servers, and you
+            control what gets saved. We believe feedback should be invisible, but never invasive.
+          </p>
+        </div>
+      </section>
     </main>
   );
 }

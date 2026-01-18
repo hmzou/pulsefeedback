@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useMemo } from "react";
+import Link from "next/link";
 import { startFaceTracking, FaceSignals } from "../lib/vision/faceTracker";
 import {
   saveSession,
@@ -11,6 +12,9 @@ import {
 } from "../lib/storage/sessionStore";
 import { computeEngagement, computeEmotion } from "../lib/analytics/report";
 import { isConfusionCandidate } from "../lib/analytics/confusion";
+import { design } from "../lib/design/styles";
+import DemoFlow from "../components/DemoFlow";
+import MetricCard from "../components/MetricCard";
 
 export default function ActivityPage() {
   const webcamVideoRef = useRef<HTMLVideoElement>(null);
@@ -23,6 +27,7 @@ export default function ActivityPage() {
   const [events, setEvents] = useState<SessionEvent[]>([]);
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [liveFace, setLiveFace] = useState<FaceSignals | null>(null);
+  const [hasSaved, setHasSaved] = useState(false);
 
   // Track emotion history for duration-based detection
   const emotionHistoryRef = useRef<Array<{ t: number; emotion: string; smile: number }>>([]);
@@ -324,103 +329,363 @@ export default function ActivityPage() {
     }
     const payload = buildPayload();
     saveSession(payload);
+    setHasSaved(true);
     alert("Activity session saved! You can now view it in /report or ask AI in /ask");
   };
 
-  return (
-    <main style={{ padding: 32, fontFamily: "system-ui", maxWidth: 1200, color: "#000", backgroundColor: "#ffffff" }}>
-      <h2 style={{ color: "#000" }}>Activity Tracking</h2>
-      <p style={{ color: "#000" }}>Track your engagement during any activity (YouTube, lectures, Zoom, etc.)</p>
+  const saveAndMark = () => {
+    saveToLocal();
+  };
 
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 16 }}>
+  // Determine demo flow step
+  const demoStep: 1 | 2 | 3 | 4 = useMemo(() => {
+    if (hasSaved) return 4;
+    if (screenStreamRef.current?.active && points.length > 0) return 3;
+    if (screenStreamRef.current?.active) return 2;
+    if (isRunning) return 2;
+    return 1;
+  }, [isRunning, hasSaved, points.length]);
+
+  const hasScreenShare = !!screenStreamRef.current?.active;
+
+  return (
+    <main
+      style={{
+        padding: `${design.spacing.xl} ${design.spacing.xl}`,
+        maxWidth: 1200,
+        margin: "0 auto",
+        color: design.colors.text,
+        backgroundColor: design.colors.background,
+        fontFamily: design.typography.fontFamily,
+      }}
+    >
+      <div style={{ marginBottom: design.spacing.xl }}>
+        <h2 style={{ ...design.typography.h2, marginBottom: design.spacing.sm, color: design.colors.text, marginTop: 0 }}>
+          Activity Tracking
+        </h2>
+        <p style={{ ...design.typography.body, color: design.colors.textSecondary, margin: 0 }}>
+          Track your engagement during any activity. Share your screen (YouTube, Zoom, lectures) and we&apos;ll capture real-time feedback.
+        </p>
+      </div>
+
+      <DemoFlow
+        step={demoStep}
+        isTracking={isRunning}
+        hasScreenShare={hasScreenShare}
+        hasSaved={points.length > 0 && !isRunning}
+      />
+
+      <div
+        style={{
+          display: "flex",
+          gap: design.spacing.md,
+          flexWrap: "wrap",
+          marginBottom: design.spacing.xl,
+          alignItems: "center",
+        }}
+      >
         {!isRunning ? (
-          <button onClick={startActivity} style={{ padding: "10px 16px", cursor: "pointer" }}>
+          <button
+            onClick={startActivity}
+            style={{
+              padding: "14px 28px",
+              cursor: "pointer",
+              backgroundColor: design.colors.primary,
+              color: "#ffffff",
+              border: "none",
+              borderRadius: design.radius.md,
+              fontWeight: 600,
+              fontSize: "15px",
+              transition: design.animation.normal,
+              boxShadow: design.shadow.md,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = design.colors.primaryHover;
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = design.shadow.lg;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = design.colors.primary;
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = design.shadow.md;
+            }}
+          >
             Start Activity Tracking
           </button>
         ) : (
-          <button onClick={stopActivity} style={{ padding: "10px 16px", cursor: "pointer" }}>
-            Stop
+          <button
+            onClick={stopActivity}
+            style={{
+              padding: "14px 28px",
+              cursor: "pointer",
+              backgroundColor: design.colors.error,
+              color: "#ffffff",
+              border: "none",
+              borderRadius: design.radius.md,
+              fontWeight: 600,
+              fontSize: "15px",
+              transition: design.animation.normal,
+              boxShadow: design.shadow.md,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#dc2626";
+              e.currentTarget.style.transform = "translateY(-2px)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = design.colors.error;
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            Stop Tracking
           </button>
         )}
 
         <button
-          onClick={saveToLocal}
-          disabled={points.length === 0}
+          onClick={saveAndMark}
+          disabled={points.length === 0 || isRunning}
           style={{
-            padding: "10px 16px",
-            cursor: points.length === 0 ? "not-allowed" : "pointer",
+            padding: "14px 28px",
+            cursor: points.length === 0 || isRunning ? "not-allowed" : "pointer",
+            backgroundColor: points.length === 0 || isRunning ? design.colors.borderLight : "#ffffff",
+            color: points.length === 0 || isRunning ? design.colors.textTertiary : design.colors.text,
+            border: `1px solid ${design.colors.border}`,
+            borderRadius: design.radius.md,
+            fontWeight: 600,
+            fontSize: "15px",
+            transition: design.animation.normal,
+            opacity: points.length === 0 || isRunning ? 0.5 : 1,
+          }}
+          onMouseEnter={(e) => {
+            if (points.length > 0 && !isRunning) {
+              e.currentTarget.style.backgroundColor = design.colors.surface;
+              e.currentTarget.style.transform = "translateY(-2px)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (points.length > 0 && !isRunning) {
+              e.currentTarget.style.backgroundColor = "#ffffff";
+              e.currentTarget.style.transform = "translateY(0)";
+            }
           }}
         >
           Save for Report
         </button>
-
-        <a href="/report" style={{ alignSelf: "center" }}>
-          Go to Report →
-        </a>
-
-        <a href="/ask" style={{ alignSelf: "center" }}>
-          Ask AI →
-        </a>
-
-        <a href="/" style={{ alignSelf: "center" }}>
-          ← Back
-        </a>
       </div>
 
-      <div style={{ marginTop: 24, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
+          gap: design.spacing.xl,
+          marginBottom: design.spacing.xl,
+        }}
+      >
         {/* Left: Webcam */}
-        <div style={{ border: "1px solid #ddd", borderRadius: 12, padding: 12 }}>
-          <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Webcam Preview</div>
+        <div
+          style={{
+            border: `1px solid ${design.colors.border}`,
+            borderRadius: design.radius.lg,
+            padding: design.spacing.lg,
+            backgroundColor: design.colors.surface,
+            boxShadow: design.shadow.sm,
+            transition: design.animation.normal,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = design.shadow.md;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = design.shadow.sm;
+          }}
+        >
+          <div
+            style={{
+              ...design.typography.caption,
+              color: design.colors.textSecondary,
+              marginBottom: design.spacing.md,
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+            }}
+          >
+            📷 Webcam Preview
+          </div>
           <video
             ref={webcamVideoRef}
             autoPlay
             playsInline
             muted
-            style={{ width: "100%", borderRadius: 12, border: "1px solid #ccc" }}
+            style={{
+              width: "100%",
+              borderRadius: design.radius.md,
+              border: `1px solid ${design.colors.border}`,
+              backgroundColor: "#000",
+              aspectRatio: "4/3",
+              objectFit: "cover",
+            }}
           />
         </div>
 
         {/* Right: Screen Share */}
-        <div style={{ border: "1px solid #ddd", borderRadius: 12, padding: 12 }}>
-          <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Screen Share Preview</div>
+        <div
+          style={{
+            border: `1px solid ${design.colors.border}`,
+            borderRadius: design.radius.lg,
+            padding: design.spacing.lg,
+            backgroundColor: design.colors.surface,
+            boxShadow: design.shadow.sm,
+            transition: design.animation.normal,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = design.shadow.md;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = design.shadow.sm;
+          }}
+        >
+          <div
+            style={{
+              ...design.typography.caption,
+              color: design.colors.textSecondary,
+              marginBottom: design.spacing.md,
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+            }}
+          >
+            🖥️ Screen Share Preview
+          </div>
           <video
             ref={screenVideoRef}
             autoPlay
             playsInline
             muted
-            style={{ width: "100%", borderRadius: 12, border: "1px solid #ccc" }}
+            style={{
+              width: "100%",
+              borderRadius: design.radius.md,
+              border: `1px solid ${design.colors.border}`,
+              backgroundColor: "#000",
+              aspectRatio: "16/9",
+              objectFit: "contain",
+            }}
           />
+          {!hasScreenShare && isRunning && (
+            <div
+              style={{
+                marginTop: design.spacing.md,
+                padding: design.spacing.md,
+                backgroundColor: design.colors.warning + "15",
+                border: `1px solid ${design.colors.warning}40`,
+                borderRadius: design.radius.sm,
+                fontSize: "13px",
+                color: design.colors.textSecondary,
+                textAlign: "center",
+              }}
+            >
+              Waiting for screen share permission...
+            </div>
+          )}
         </div>
       </div>
 
       {/* Live Metrics */}
-      <div style={{ marginTop: 24, border: "1px solid #ddd", borderRadius: 12, padding: 12 }}>
-        <h3 style={{ marginTop: 0 }}>Live Metrics</h3>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
-          <Card label="Face present" value={latest ? (latest.facePresent ? "Yes" : "No") : "—"} />
-          <Card label="Engagement" value={latest ? `${latest.engagement}` : "—"} />
-          <Card label="Emotion" value={latest ? latest.emotion : "—"} />
-          <Card label="Gaze" value={latest ? latest.gaze : "—"} />
-          <Card label="Off-screen" value={latest ? (latest.offScreen ? "Yes" : "No") : "—"} />
-          <Card label="Eyes closed" value={latest ? (latest.eyesClosed ? "Yes" : "No") : "—"} />
-          <Card label="Smile" value={latest ? `${latest.smile}` : "—"} />
-          <Card label="Snapshots" value={`${snapshots.length}/25`} />
+      <div
+        style={{
+          border: `1px solid ${design.colors.border}`,
+          borderRadius: design.radius.lg,
+          padding: design.spacing.xl,
+          backgroundColor: design.colors.background,
+          boxShadow: design.shadow.md,
+        }}
+      >
+        <h3 style={{ ...design.typography.h3, marginTop: 0, marginBottom: design.spacing.lg, color: design.colors.text }}>
+          Live Metrics
+        </h3>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+            gap: design.spacing.md,
+            marginBottom: design.spacing.lg,
+          }}
+        >
+          <MetricCard
+            label="Engagement"
+            value={latest ? latest.engagement.toFixed(2) : "—"}
+            tooltip="Overall engagement score (0-1). Higher means more focused attention."
+            highlight={isRunning}
+          />
+          <MetricCard
+            label="Emotion"
+            value={latest ? latest.emotion : "—"}
+            tooltip="Detected emotional state: positive, neutral, negative, concentration, frustration, confusion."
+          />
+          <MetricCard
+            label="Gaze"
+            value={latest ? latest.gaze : "—"}
+            tooltip="Where you're looking: upper/center/lower + left/center/right zones."
+          />
+          <MetricCard
+            label="Face Present"
+            value={latest ? (latest.facePresent ? "Yes" : "No") : "—"}
+            tooltip="Whether a face is detected in the webcam."
+          />
+          <MetricCard
+            label="Off-screen"
+            value={latest ? (latest.offScreen ? "Yes" : "No") : "—"}
+            tooltip="Whether your gaze is off the screen (looking away)."
+          />
+          <MetricCard
+            label="Eyes Closed"
+            value={latest ? (latest.eyesClosed ? "Yes" : "No") : "—"}
+            tooltip="Whether your eyes are currently closed (blink or tired)."
+          />
+          <MetricCard
+            label="Smile"
+            value={latest ? latest.smile.toFixed(2) : "—"}
+            tooltip="Smile intensity (0-3). Higher means more positive expression."
+          />
+          <MetricCard
+            label="Snapshots"
+            value={`${snapshots.length}/25`}
+            tooltip="Number of confusion moments captured (max 25)."
+          />
         </div>
 
-        <div style={{ marginTop: 16, fontSize: 14, opacity: 0.8 }}>
-          Status: <b>{isRunning ? "Tracking" : "Idle"}</b> • Samples: <b>{points.length}</b> • 
-          Confusion snapshots: <b>{snapshots.length}</b>
+        <div
+          style={{
+            padding: design.spacing.md,
+            backgroundColor: design.colors.surface,
+            borderRadius: design.radius.md,
+            ...design.typography.small,
+            color: design.colors.textSecondary,
+            border: `1px solid ${design.colors.border}`,
+            display: "flex",
+            gap: design.spacing.md,
+            flexWrap: "wrap",
+            alignItems: "center",
+          }}
+        >
+          <span>
+            <strong style={{ color: design.colors.text }}>Status:</strong>{" "}
+            <span
+              style={{
+                color: isRunning ? design.colors.success : design.colors.textSecondary,
+                fontWeight: 600,
+              }}
+            >
+              {isRunning ? "● Tracking" : "○ Idle"}
+            </span>
+          </span>
+          <span>•</span>
+          <span>
+            <strong style={{ color: design.colors.text }}>Samples:</strong> {points.length}
+          </span>
+          <span>•</span>
+          <span>
+            <strong style={{ color: design.colors.text }}>Confusion snapshots:</strong> {snapshots.length}
+          </span>
         </div>
       </div>
     </main>
-  );
-}
-
-function Card({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{ border: "1px solid #eee", borderRadius: 12, padding: 12 }}>
-      <div style={{ fontSize: 12, opacity: 0.7 }}>{label}</div>
-      <div style={{ fontSize: 18, fontWeight: 700, marginTop: 4 }}>{value}</div>
-    </div>
   );
 }

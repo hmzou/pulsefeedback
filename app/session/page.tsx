@@ -312,17 +312,86 @@ export default function SessionPage() {
   };
 
   return (
-    <main style={{ padding: 32, fontFamily: "system-ui", maxWidth: 1100, color: "#000", backgroundColor: "#ffffff" }}>
-      <h2 style={{ color: "#000" }}>Session</h2>
-      <p style={{ color: "#000" }}>Start → {TASK_SECONDS}s video task → eye tracking + facial signals logged each second.</p>
+    <main
+      style={{
+        padding: "48px 32px",
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', system-ui, sans-serif",
+        maxWidth: 1200,
+        margin: "0 auto",
+        color: "#111827",
+        backgroundColor: "#ffffff",
+      }}
+    >
+      <div style={{ marginBottom: "32px" }}>
+        <h2
+          style={{
+            fontSize: "28px",
+            fontWeight: 600,
+            marginBottom: "8px",
+            color: "#111827",
+            marginTop: 0,
+          }}
+        >
+          Session
+        </h2>
+        <p style={{ fontSize: "15px", color: "#6b7280", margin: 0 }}>
+          Start → {TASK_SECONDS}s video task → eye tracking + facial signals logged each second.
+        </p>
+      </div>
 
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: "10px",
+          flexWrap: "wrap",
+          marginBottom: "32px",
+          alignItems: "center",
+        }}
+      >
         {!isRunning ? (
-          <button onClick={startSession} style={{ padding: "10px 16px", cursor: "pointer" }}>
+          <button
+            onClick={startSession}
+            style={{
+              padding: "12px 24px",
+              cursor: "pointer",
+              backgroundColor: "#111827",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "10px",
+              fontWeight: 500,
+              fontSize: "15px",
+              transition: "background-color 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#374151";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#111827";
+            }}
+          >
             Start Session
           </button>
         ) : (
-          <button onClick={stopSession} style={{ padding: "10px 16px", cursor: "pointer" }}>
+          <button
+            onClick={stopSession}
+            style={{
+              padding: "12px 24px",
+              cursor: "pointer",
+              backgroundColor: "#ef4444",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "10px",
+              fontWeight: 500,
+              fontSize: "15px",
+              transition: "background-color 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#dc2626";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#ef4444";
+            }}
+          >
             Stop Session
           </button>
         )}
@@ -331,8 +400,25 @@ export default function SessionPage() {
           onClick={startTask}
           disabled={!isRunning || taskState === "playing"}
           style={{
-            padding: "10px 16px",
+            padding: "12px 24px",
             cursor: !isRunning || taskState === "playing" ? "not-allowed" : "pointer",
+            backgroundColor: !isRunning || taskState === "playing" ? "#f3f4f6" : "#f9fafb",
+            color: !isRunning || taskState === "playing" ? "#9ca3af" : "#111827",
+            border: "1px solid #e5e7eb",
+            borderRadius: "10px",
+            fontWeight: 500,
+            fontSize: "15px",
+            transition: "background-color 0.2s",
+          }}
+          onMouseEnter={(e) => {
+            if (isRunning && taskState !== "playing") {
+              e.currentTarget.style.backgroundColor = "#f3f4f6";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (isRunning && taskState !== "playing") {
+              e.currentTarget.style.backgroundColor = "#f9fafb";
+            }
           }}
         >
           Play Task
@@ -342,10 +428,27 @@ export default function SessionPage() {
           onClick={downloadJSON}
           disabled={points.length === 0}
           style={{
-            padding: "10px 16px",
+            padding: "12px 24px",
             cursor: points.length === 0 ? "not-allowed" : "pointer",
+            backgroundColor: points.length === 0 ? "#f3f4f6" : "#f9fafb",
+            color: points.length === 0 ? "#9ca3af" : "#111827",
+            border: "1px solid #e5e7eb",
+            borderRadius: "10px",
+            fontWeight: 500,
+            fontSize: "15px",
+            transition: "background-color 0.2s",
           }}
           title="Download entire session (all camera data while active)"
+          onMouseEnter={(e) => {
+            if (points.length > 0) {
+              e.currentTarget.style.backgroundColor = "#f3f4f6";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (points.length > 0) {
+              e.currentTarget.style.backgroundColor = "#f9fafb";
+            }
+          }}
         >
           Download Session
         </button>
@@ -354,36 +457,124 @@ export default function SessionPage() {
           onClick={saveToLocal}
           disabled={points.length === 0 || !events.some((e) => e.type === "task_start")}
           style={{
-            padding: "10px 16px",
-            cursor: points.length === 0 || !events.some((e) => e.type === "task_start") ? "not-allowed" : "pointer",
+            padding: "12px 24px",
+            cursor:
+              points.length === 0 || !events.some((e) => e.type === "task_start") ? "not-allowed" : "pointer",
+            backgroundColor:
+              points.length === 0 || !events.some((e) => e.type === "task_start") ? "#f3f4f6" : "#f9fafb",
+            color:
+              points.length === 0 || !events.some((e) => e.type === "task_start") ? "#9ca3af" : "#111827",
+            border: "1px solid #e5e7eb",
+            borderRadius: "10px",
+            fontWeight: 500,
+            fontSize: "15px",
+            transition: "background-color 0.2s",
           }}
           title="Save complete session with task for report generation"
+          onMouseEnter={(e) => {
+            if (points.length > 0 && events.some((e) => e.type === "task_start")) {
+              e.currentTarget.style.backgroundColor = "#f3f4f6";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (points.length > 0 && events.some((e) => e.type === "task_start")) {
+              e.currentTarget.style.backgroundColor = "#f9fafb";
+            }
+          }}
         >
           Save for Report
         </button>
 
-        <a href="/report" style={{ alignSelf: "center" }}>
+        <a
+          href="/report"
+          style={{
+            padding: "12px 20px",
+            color: "#6b7280",
+            textDecoration: "none",
+            fontSize: "15px",
+            fontWeight: 500,
+            transition: "color 0.2s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "#111827";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "#6b7280";
+          }}
+        >
           View Report →
         </a>
 
-        <a href="/" style={{ alignSelf: "center" }}>
+        <a
+          href="/"
+          style={{
+            padding: "12px 20px",
+            color: "#6b7280",
+            textDecoration: "none",
+            fontSize: "15px",
+            transition: "color 0.2s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "#111827";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "#6b7280";
+          }}
+        >
           ← Back
         </a>
       </div>
 
-      <div style={{ marginTop: 18, display: "grid", gridTemplateColumns: "420px 1fr", gap: 16 }}>
+      <div
+        style={{
+          marginTop: "24px",
+          display: "grid",
+          gridTemplateColumns: "420px 1fr",
+          gap: "20px",
+        }}
+      >
         {/* Left: webcam + task */}
-        <div style={{ border: "1px solid #ddd", borderRadius: 12, padding: 12 }}>
-          <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Webcam</div>
+        <div
+          style={{
+            border: "1px solid #e5e7eb",
+            borderRadius: "16px",
+            padding: "16px",
+            backgroundColor: "#f9fafb",
+            boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "13px",
+              color: "#6b7280",
+              marginBottom: "10px",
+              fontWeight: 500,
+            }}
+          >
+            Webcam
+          </div>
           <video
             ref={videoRef}
             autoPlay
             playsInline
             muted
-            style={{ width: "100%", borderRadius: 12, border: "1px solid #ccc" }}
+            style={{
+              width: "100%",
+              borderRadius: "12px",
+              border: "1px solid #e5e7eb",
+              backgroundColor: "#000",
+            }}
           />
 
-          <div style={{ marginTop: 12, fontSize: 12, opacity: 0.7, marginBottom: 6 }}>
+          <div
+            style={{
+              marginTop: "16px",
+              fontSize: "13px",
+              color: "#6b7280",
+              marginBottom: "10px",
+              fontWeight: 500,
+            }}
+          >
             Task Video ({taskState})
           </div>
 
@@ -393,13 +584,14 @@ export default function SessionPage() {
               src="/videos/task.mp4"
               controls
               preload="auto"
-              style={{ 
-                width: "100%", 
+              style={{
+                width: "100%",
                 maxWidth: "600px",
-                borderRadius: 12, 
-                border: "1px solid #eee",
+                borderRadius: "12px",
+                border: "1px solid #e5e7eb",
                 margin: "0 auto",
-                display: "block"
+                display: "block",
+                backgroundColor: "#000",
               }}
             />
             {showTaskOverlay && taskState === "playing" && (
@@ -425,22 +617,72 @@ export default function SessionPage() {
             )}
           </div>
 
-          <div style={{ marginTop: 10, fontSize: 14, opacity: 0.8 }}>
-            Status: <b>{isRunning ? "Recording" : "Idle"}</b> • Samples: <b>{points.length}</b>
+          <div
+            style={{
+              marginTop: "16px",
+              padding: "12px 16px",
+              backgroundColor: "#ffffff",
+              borderRadius: "10px",
+              fontSize: "14px",
+              color: "#374151",
+              border: "1px solid #e5e7eb",
+            }}
+          >
+            <strong style={{ color: "#111827" }}>Status:</strong>{" "}
+            <span style={{ color: isRunning ? "#10b981" : "#6b7280" }}>
+              {isRunning ? "Recording" : "Idle"}
+            </span>
+            {" • "}
+            <strong style={{ color: "#111827" }}>Samples:</strong> {points.length}
           </div>
         </div>
 
         {/* Right: live metrics */}
-        <div style={{ border: "1px solid #ddd", borderRadius: 12, padding: 12 }}>
-          <h3 style={{ marginTop: 0 }}>Live Metrics</h3>
+        <div
+          style={{
+            border: "1px solid #e5e7eb",
+            borderRadius: "16px",
+            padding: "24px",
+            backgroundColor: "#ffffff",
+            boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+          }}
+        >
+          <h3
+            style={{
+              marginTop: 0,
+              marginBottom: "20px",
+              fontSize: "20px",
+              fontWeight: 600,
+              color: "#111827",
+            }}
+          >
+            Live Metrics
+          </h3>
 
           {isRunning && !liveFace && (
-            <div style={{ padding: 8, background: "#fff3cd", borderRadius: 8, marginBottom: 12, fontSize: 12 }}>
+            <div
+              style={{
+                padding: "12px 16px",
+                background: "#fffbeb",
+                borderRadius: "10px",
+                marginBottom: "16px",
+                fontSize: "13px",
+                color: "#92400e",
+                border: "1px solid #fde68a",
+              }}
+            >
               ⚠ Face tracker initializing... Make sure your face is visible in the camera.
             </div>
           )}
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: "16px",
+              marginBottom: "20px",
+            }}
+          >
             <Card label="Face present" value={latest ? (latest.facePresent ? "Yes" : "No") : "—"} />
             <Card label="Gaze" value={latest ? latest.gaze : "—"} />
             <Card label="Eyes closed" value={latest ? (latest.eyesClosed ? "Yes" : "No") : "—"} />
@@ -453,29 +695,52 @@ export default function SessionPage() {
             <Card label="Emotion" value={latest ? latest.emotion : "—"} />
           </div>
 
-          <h4 style={{ marginTop: 16 }}>Events</h4>
-          <ul style={{ marginTop: 8 }}>
+          <h4
+            style={{
+              marginTop: "24px",
+              marginBottom: "12px",
+              fontSize: "16px",
+              fontWeight: 600,
+              color: "#111827",
+            }}
+          >
+            Events
+          </h4>
+          <ul style={{ margin: 0, paddingLeft: "20px", color: "#374151", lineHeight: 1.8, fontSize: "14px" }}>
             {events.length === 0 ? (
-              <li style={{ opacity: 0.7 }}>No events yet</li>
+              <li style={{ color: "#9ca3af" }}>No events yet</li>
             ) : (
               events.map((e, idx) => (
-                <li key={idx}>
-                  <b>{e.type}</b> @ {e.t}s {e.note ? `— ${e.note}` : ""}
+                <li key={idx} style={{ marginBottom: "4px" }}>
+                  <strong style={{ color: "#111827" }}>{e.type}</strong> @ {e.t}s{" "}
+                  {e.note ? `— ${e.note}` : ""}
                 </li>
               ))
             )}
           </ul>
 
-          <h4 style={{ marginTop: 16 }}>Recent points</h4>
+          <h4
+            style={{
+              marginTop: "24px",
+              marginBottom: "12px",
+              fontSize: "16px",
+              fontWeight: 600,
+              color: "#111827",
+            }}
+          >
+            Recent points
+          </h4>
           <pre
             style={{
-              background: "#fafafa",
-              border: "1px solid #eee",
-              padding: 12,
-              borderRadius: 12,
-              maxHeight: 240,
+              background: "#f9fafb",
+              border: "1px solid #e5e7eb",
+              padding: "16px",
+              borderRadius: "12px",
+              maxHeight: 280,
               overflow: "auto",
-              fontSize: 12,
+              fontSize: "12px",
+              color: "#374151",
+              margin: 0,
             }}
           >
             {JSON.stringify(points.slice(-8), null, 2)}
