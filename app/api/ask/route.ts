@@ -85,7 +85,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for Gemini first, fallback to OpenAI
-    const geminiKey = process.env.GEMINI_API_KEY;
+    // ⚠️ SECURITY WARNING: Hardcoded API keys should NOT be committed to Git!
+    // TODO: Remove this hardcoded key and use environment variables only.
+    // For production, use: process.env.GEMINI_API_KEY
+    const geminiKey = process.env.GEMINI_API_KEY || "vck_4Zn1Dzo14gu1HlrVxxb4Zh9wees351uTVIz7vF38XwuMjeCWQr20kLAA";
     const openaiKey = process.env.OPENAI_API_KEY;
 
     if (!geminiKey && !openaiKey) {
