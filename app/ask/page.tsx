@@ -2,6 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { loadSession, type SessionPayload } from "../lib/storage/sessionStore";
+import { design } from "../lib/design/styles";
+
+const SUGGESTION_QUESTIONS = [
+  "What patterns do you see in my engagement?",
+  "When did I seem most confused?",
+  "What was I looking at during confusion moments?",
+  "How did my emotions change over time?",
+  "What moments had the highest engagement?",
+  "Can you explain why I felt that way?",
+];
 
 export default function AskPage() {
   const [session, setSession] = useState<SessionPayload | null>(null);
@@ -51,30 +61,94 @@ export default function AskPage() {
     }
   };
 
+  const handleSuggestionClick = (suggestion: string) => {
+    setQuestion(suggestion);
+  };
+
   return (
-    <main style={{ padding: 32, fontFamily: "system-ui", maxWidth: 1000, color: "#000", backgroundColor: "#ffffff" }}>
-      <h2 style={{ color: "#000" }}>Ask AI Analyst</h2>
-      <p style={{ opacity: 0.8, color: "#000" }}>
-        Ask questions about your session data. The AI will analyze your engagement, emotions, and behavior patterns.
-      </p>
+    <main
+      style={{
+        padding: `${design.spacing.xl} ${design.spacing.xl}`,
+        maxWidth: 900,
+        margin: "0 auto",
+        color: design.colors.text,
+        backgroundColor: design.colors.background,
+        fontFamily: design.typography.fontFamily,
+      }}
+    >
+      <div style={{ marginBottom: design.spacing.xl }}>
+        <h2 style={{ ...design.typography.h2, marginBottom: design.spacing.sm, color: design.colors.text, marginTop: 0 }}>
+          Ask AI Analyst
+        </h2>
+        <p style={{ ...design.typography.body, color: design.colors.textSecondary, margin: 0 }}>
+          Ask questions about your session data. The AI analyzes your engagement, emotions, and behavior patterns, including screen snapshots during confusion moments.
+        </p>
+      </div>
 
       {!session ? (
-        <div style={{ border: "1px solid #ddd", borderRadius: 12, padding: 16, marginTop: 16 }}>
-          <p><b>No saved session found.</b></p>
-          <p>Go to <a href="/session">/session</a> or <a href="/activity">/activity</a>, run a session, then click "Save for Report".</p>
+        <div
+          style={{
+            border: `1px solid ${design.colors.border}`,
+            borderRadius: design.radius.lg,
+            padding: design.spacing.xl,
+            marginTop: design.spacing.lg,
+            backgroundColor: design.colors.surface,
+            boxShadow: design.shadow.sm,
+          }}
+        >
+          <p style={{ margin: 0, marginBottom: design.spacing.sm, color: design.colors.text, fontWeight: 600 }}>
+            No saved session found.
+          </p>
+          <p style={{ margin: 0, color: design.colors.textSecondary, ...design.typography.small }}>
+            Go to <a href="/activity" style={{ color: design.colors.primary, textDecoration: "none" }}>/activity</a> or{" "}
+            <a href="/session" style={{ color: design.colors.primary, textDecoration: "none" }}>/session</a>, run a session, then click "Save for Report".
+          </p>
         </div>
       ) : (
         <>
-          <div style={{ marginTop: 24, border: "1px solid #ddd", borderRadius: 12, padding: 16 }}>
-            <h3 style={{ marginTop: 0 }}>Session Info</h3>
-            <p>
-              Mode: <b>{session.mode || "task"}</b> • Points: <b>{session.points?.length || 0}</b> • 
-              Snapshots: <b>{session.snapshots?.length || 0}</b>
-            </p>
+          {/* Session Info Card */}
+          <div
+            style={{
+              marginTop: design.spacing.lg,
+              border: `1px solid ${design.colors.border}`,
+              borderRadius: design.radius.lg,
+              padding: design.spacing.lg,
+              backgroundColor: design.colors.surface,
+              boxShadow: design.shadow.sm,
+            }}
+          >
+            <h3 style={{ ...design.typography.h4, marginTop: 0, marginBottom: design.spacing.md, color: design.colors.text }}>
+              📊 Session Info
+            </h3>
+            <div style={{ display: "flex", gap: design.spacing.lg, flexWrap: "wrap", ...design.typography.small }}>
+              <span>
+                <strong style={{ color: design.colors.text }}>Mode:</strong>{" "}
+                <span style={{ color: design.colors.textSecondary }}>{session.mode || "task"}</span>
+              </span>
+              <span>•</span>
+              <span>
+                <strong style={{ color: design.colors.text }}>Data Points:</strong>{" "}
+                <span style={{ color: design.colors.textSecondary }}>{session.points?.length || 0}</span>
+              </span>
+              <span>•</span>
+              <span>
+                <strong style={{ color: design.colors.text }}>Snapshots:</strong>{" "}
+                <span style={{ color: design.colors.textSecondary }}>{session.snapshots?.length || 0}</span>
+              </span>
+            </div>
           </div>
 
-          <div style={{ marginTop: 24 }}>
-            <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
+          {/* Question Input */}
+          <div style={{ marginTop: design.spacing.xl }}>
+            <label
+              style={{
+                display: "block",
+                marginBottom: design.spacing.md,
+                fontWeight: 600,
+                ...design.typography.body,
+                color: design.colors.text,
+              }}
+            >
               Your Question
             </label>
             <textarea
@@ -83,65 +157,210 @@ export default function AskPage() {
               placeholder="e.g., What patterns do you see in my engagement? When did I seem most confused?"
               style={{
                 width: "100%",
-                minHeight: "100px",
-                padding: 12,
-                borderRadius: 8,
-                border: "1px solid #ddd",
-                fontFamily: "inherit",
-                fontSize: 14,
+                minHeight: "140px",
+                padding: design.spacing.lg,
+                borderRadius: design.radius.md,
+                border: `1px solid ${design.colors.border}`,
+                fontFamily: design.typography.fontFamily,
+                ...design.typography.body,
+                color: design.colors.text,
+                backgroundColor: design.colors.background,
+                resize: "vertical",
+                transition: design.animation.normal,
+                boxShadow: design.shadow.sm,
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = design.colors.primary;
+                e.currentTarget.style.outline = "none";
+                e.currentTarget.style.boxShadow = design.shadow.md;
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = design.colors.border;
+                e.currentTarget.style.boxShadow = design.shadow.sm;
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                  handleAsk();
+                }
               }}
             />
+
+            {/* Suggestion Chips */}
+            <div style={{ marginTop: design.spacing.md, marginBottom: design.spacing.lg }}>
+              <div
+                style={{
+                  ...design.typography.caption,
+                  color: design.colors.textSecondary,
+                  marginBottom: design.spacing.sm,
+                  fontWeight: 500,
+                }}
+              >
+                Try asking:
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: design.spacing.sm,
+                }}
+              >
+                {SUGGESTION_QUESTIONS.map((suggestion, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    style={{
+                      padding: `${design.spacing.sm} ${design.spacing.md}`,
+                      cursor: "pointer",
+                      border: `1px solid ${design.colors.border}`,
+                      borderRadius: design.radius.md,
+                      background: design.colors.background,
+                      color: design.colors.textSecondary,
+                      ...design.typography.small,
+                      fontWeight: 400,
+                      transition: design.animation.normal,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = design.colors.surface;
+                      e.currentTarget.style.borderColor = design.colors.primary;
+                      e.currentTarget.style.color = design.colors.text;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = design.colors.background;
+                      e.currentTarget.style.borderColor = design.colors.border;
+                      e.currentTarget.style.color = design.colors.textSecondary;
+                    }}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <button
               onClick={handleAsk}
               disabled={loading || !question.trim()}
               style={{
-                marginTop: 12,
-                padding: "12px 24px",
+                padding: "14px 32px",
                 cursor: loading || !question.trim() ? "not-allowed" : "pointer",
-                backgroundColor: loading || !question.trim() ? "#ccc" : "#000",
-                color: "#fff",
+                backgroundColor: loading || !question.trim() ? design.colors.borderLight : design.colors.primary,
+                color: loading || !question.trim() ? design.colors.textTertiary : "#ffffff",
                 border: "none",
-                borderRadius: 8,
+                borderRadius: design.radius.md,
                 fontWeight: 600,
+                fontSize: "15px",
+                transition: design.animation.normal,
+                boxShadow: loading || !question.trim() ? "none" : design.shadow.md,
+                opacity: loading || !question.trim() ? 0.6 : 1,
+              }}
+              onMouseEnter={(e) => {
+                if (!loading && question.trim()) {
+                  e.currentTarget.style.backgroundColor = design.colors.primaryHover;
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = design.shadow.lg;
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!loading && question.trim()) {
+                  e.currentTarget.style.backgroundColor = design.colors.primary;
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = design.shadow.md;
+                }
               }}
             >
-              {loading ? "Asking AI..." : "Ask"}
+              {loading ? "⏳ Analyzing..." : "🤖 Ask AI"}
             </button>
           </div>
 
+          {/* Error State */}
           {error && (
             <div
               style={{
-                marginTop: 24,
-                padding: 16,
-                borderRadius: 12,
-                backgroundColor: "#fee",
-                border: "1px solid #fcc",
-                color: "#c00",
+                marginTop: design.spacing.xl,
+                padding: design.spacing.lg,
+                borderRadius: design.radius.md,
+                backgroundColor: design.colors.errorBackground,
+                border: `1px solid ${design.colors.errorBorder}`,
+                color: design.colors.errorText,
               }}
             >
-              <strong>Error:</strong> {error}
-              {error.includes("OPENAI_API_KEY") && (
-                <p style={{ marginTop: 8, fontSize: 14 }}>
-                  Please set OPENAI_API_KEY in your .env.local file and restart the dev server.
-                </p>
+              <strong style={{ display: "block", marginBottom: design.spacing.sm, ...design.typography.body }}>
+                ⚠️ Error:
+              </strong>
+              <p style={{ margin: 0, ...design.typography.small }}>{error}</p>
+              {(error.includes("OPENAI_API_KEY") ||
+                error.includes("GEMINI_API_KEY") ||
+                error.includes("API key") ||
+                error.includes("No AI API key")) && (
+                <div style={{ marginTop: design.spacing.md }}>
+                  <p style={{ marginBottom: design.spacing.sm, ...design.typography.caption, color: "#7f1d1d", fontWeight: 600 }}>
+                    Missing API Key Configuration
+                  </p>
+                  <ul style={{ margin: 0, paddingLeft: "20px", ...design.typography.caption, color: "#7f1d1d" }}>
+                    <li>
+                      <strong>Local development:</strong> Create a <code>.env.local</code> file with <code>GEMINI_API_KEY</code> or{" "}
+                      <code>OPENAI_API_KEY</code> and restart the dev server.
+                    </li>
+                    <li>
+                      <strong>Vercel:</strong> Add environment variables in the Vercel dashboard (Settings → Environment Variables).
+                    </li>
+                    <li>See <code>.env.example</code> for the format.</li>
+                  </ul>
+                </div>
               )}
             </div>
           )}
 
-          {response && (
-            <div style={{ marginTop: 24 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <h3 style={{ margin: 0 }}>AI Response</h3>
+          {/* Loading State */}
+          {loading && (
+            <div
+              style={{
+                marginTop: design.spacing.xl,
+                padding: design.spacing.xl,
+                borderRadius: design.radius.lg,
+                backgroundColor: design.colors.surface,
+                border: `1px solid ${design.colors.border}`,
+                textAlign: "center",
+              }}
+            >
+              <div style={{ ...design.typography.body, color: design.colors.textSecondary }}>
+                <div style={{ fontSize: "32px", marginBottom: design.spacing.md }}>✨</div>
+                Analyzing your session data...
+              </div>
+            </div>
+          )}
+
+          {/* AI Response */}
+          {response && !loading && (
+            <div style={{ marginTop: design.spacing.xl }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: design.spacing.lg,
+                }}
+              >
+                <h3 style={{ ...design.typography.h3, margin: 0, color: design.colors.text }}>💡 AI Analysis</h3>
                 <button
                   onClick={() => setShowJson(!showJson)}
                   style={{
-                    padding: "6px 12px",
-                    fontSize: 12,
+                    padding: `${design.spacing.sm} ${design.spacing.md}`,
+                    ...design.typography.small,
                     cursor: "pointer",
-                    border: "1px solid #ddd",
-                    borderRadius: 6,
-                    background: "#fafafa",
+                    border: `1px solid ${design.colors.border}`,
+                    borderRadius: design.radius.sm,
+                    background: design.colors.surface,
+                    color: design.colors.textSecondary,
+                    fontWeight: 500,
+                    transition: design.animation.normal,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = design.colors.borderLight;
+                    e.currentTarget.style.color = design.colors.text;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = design.colors.surface;
+                    e.currentTarget.style.color = design.colors.textSecondary;
                   }}
                 >
                   {showJson ? "Hide JSON" : "Show JSON"}
@@ -151,29 +370,50 @@ export default function AskPage() {
               {!showJson ? (
                 <div
                   style={{
-                    border: "1px solid #ddd",
-                    borderRadius: 12,
-                    padding: 16,
+                    border: `1px solid ${design.colors.border}`,
+                    borderRadius: design.radius.lg,
+                    padding: design.spacing.xl,
                     whiteSpace: "pre-wrap",
-                    lineHeight: 1.6,
-                    backgroundColor: "#fafafa",
+                    backgroundColor: design.colors.background,
+                    color: design.colors.textSecondary,
+                    ...design.typography.body,
+                    lineHeight: 1.8,
+                    boxShadow: design.shadow.md,
                   }}
                 >
                   {response}
                 </div>
               ) : (
-                <details style={{ border: "1px solid #ddd", borderRadius: 12, padding: 16 }}>
-                  <summary style={{ cursor: "pointer", fontWeight: 600, marginBottom: 12 }}>
+                <details
+                  style={{
+                    border: `1px solid ${design.colors.border}`,
+                    borderRadius: design.radius.lg,
+                    padding: design.spacing.lg,
+                    backgroundColor: design.colors.surface,
+                    boxShadow: design.shadow.sm,
+                  }}
+                >
+                  <summary
+                    style={{
+                      cursor: "pointer",
+                      fontWeight: 600,
+                      marginBottom: design.spacing.md,
+                      color: design.colors.text,
+                      ...design.typography.body,
+                    }}
+                  >
                     JSON Response
                   </summary>
                   <pre
                     style={{
-                      marginTop: 12,
-                      padding: 12,
-                      backgroundColor: "#fafafa",
-                      borderRadius: 8,
+                      marginTop: design.spacing.lg,
+                      padding: design.spacing.lg,
+                      backgroundColor: design.colors.background,
+                      borderRadius: design.radius.md,
                       overflow: "auto",
-                      fontSize: 12,
+                      ...design.typography.caption,
+                      border: `1px solid ${design.colors.border}`,
+                      color: design.colors.textSecondary,
                     }}
                   >
                     {JSON.stringify({ response }, null, 2)}
@@ -184,12 +424,6 @@ export default function AskPage() {
           )}
         </>
       )}
-
-      <div style={{ marginTop: 24, display: "flex", gap: 12, flexWrap: "wrap" }}>
-        <a href="/report">← View Report</a>
-        <a href="/session">Session</a>
-        <a href="/activity">Activity</a>
-      </div>
     </main>
   );
 }
