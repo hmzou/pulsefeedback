@@ -439,6 +439,223 @@ This is a hackathon prototype. Contributions welcome for:
 - ✅ Click "Save for Report" before navigating away
 - ✅ Check browser console for errors (F12)
 
+**If you haven't already:**
+
+1. **Initialize git** (if not already initialized):
+   ```powershell
+   git init
+   ```
+
+2. **Add remote** (replace `hmzou` with your GitHub username if different):
+   ```powershell
+   git remote add origin https://github.com/hmzou/pulsefeedback.git
+   ```
+   
+   **Note**: If remote already exists, update it:
+   ```powershell
+   git remote set-url origin https://github.com/hmzou/pulsefeedback.git
+   ```
+
+3. **Create .env.example file** (manually):
+   ```powershell
+   @"
+# AI Analysis API Keys (at least one required)
+# Gemini is preferred if both are set (supports vision analysis)
+GEMINI_API_KEY=
+OPENAI_API_KEY=
+"@ | Out-File -FilePath .env.example -Encoding utf8
+   ```
+
+4. **Stage all files**:
+   ```powershell
+   git add .
+   ```
+
+5. **Verify no secrets are being committed**:
+   ```powershell
+   git status
+   ```
+   
+   **Important**: Ensure `.env.local` is NOT listed. If it is, check `.gitignore` contains `.env*`.
+
+6. **Commit changes**:
+   ```powershell
+   git commit -m "feat: Add analytics page with charts and deployment config
+
+- Add /analytics page with engagement vs time, engagement vs gaze charts
+- Add Analytics link to navbar
+- Improve error messages for missing API keys
+- Add comprehensive deployment documentation
+- Update README with troubleshooting guide"
+   ```
+
+7. **Push to GitHub**:
+   ```powershell
+   git branch -M main
+   git push -u origin main
+   ```
+
+**If repository already exists and you want to update:**
+
+1. **Check current remote**:
+   ```powershell
+   git remote -v
+   ```
+
+2. **If remote is incorrect, update it**:
+   ```powershell
+   git remote set-url origin https://github.com/hmzou/pulsefeedback.git
+   ```
+
+3. **Pull latest changes** (if working with others):
+   ```powershell
+   git pull origin main
+   ```
+
+4. **Stage, commit, and push**:
+   ```powershell
+   git add .
+   git commit -m "feat: Add analytics page and deployment improvements"
+   git push origin main
+   ```
+
+#### Step 2: Import to Vercel
+
+1. Go to [vercel.com](https://vercel.com) and sign in (use GitHub to connect)
+2. Click **"Add New"** → **"Project"**
+3. **Import Git Repository**: Find `hmzou/pulsefeedback` in the list
+4. Click **"Import"**
+
+#### Step 3: Configure Project
+
+1. **Framework Preset**: Should auto-detect "Next.js" ✅
+2. **Root Directory**: Leave as `./` (root)
+3. **Build Command**: Should be `npm run build` ✅
+4. **Output Directory**: Leave as default (`.next`)
+5. **Install Command**: Should be `npm install` ✅
+
+#### Step 4: Add Environment Variables
+
+**IMPORTANT**: Before clicking "Deploy", add environment variables:
+
+1. Click **"Environment Variables"** section
+2. Add each variable:
+   - **Name**: `GEMINI_API_KEY`
+   - **Value**: Your Gemini API key
+   - **Environment**: Select all (Production, Preview, Development)
+   - Click **"Add"**
+   
+   Repeat for OpenAI (if using):
+   - **Name**: `OPENAI_API_KEY`
+   - **Value**: Your OpenAI API key
+   - **Environment**: Select all
+   - Click **"Add"**
+
+**Note**: At least one API key is required for `/ask` to work. Gemini is preferred for vision support.
+
+#### Step 5: Deploy
+
+1. Click **"Deploy"**
+2. Wait for build to complete (~1-2 minutes)
+3. Once deployed, you'll see a URL like: `https://pulsefeedback-xxx.vercel.app`
+
+#### Step 6: Verify Deployment
+
+1. **Test all routes**:
+   - `/` - Landing page
+   - `/activity` - Activity tracking
+   - `/report` - Report page (needs saved session)
+   - `/ask` - AI analysis (needs API key)
+   - `/analytics` - Analytics charts (needs saved session)
+
+2. **Test AI functionality**:
+   - Go to `/activity`
+   - Start tracking, save session
+   - Go to `/ask`
+   - Ask a question - should work if API key is set
+
+#### Step 7: Custom Domain (Optional)
+
+1. Go to **Settings** → **Domains**
+2. Add your custom domain
+3. Follow DNS setup instructions
+
+### Environment Variables
+
+⚠️ **Security**: Ensure `.env.local` is **never committed** to Git. It's already in `.gitignore`.
+
+- ✅ Local: Use `.env.local` (not tracked by git)
+- ✅ Vercel: Add via dashboard (Settings → Environment Variables)
+- ✅ Example: See `.env.example` for format
+
+## 📄 License
+
+This is a hackathon project. Use freely for demonstration purposes.
+
+## 🤝 Contributing
+
+This is a hackathon prototype. Contributions welcome for:
+- Better face tracking accuracy
+- Additional metrics (HR/BR via Presage)
+- More sophisticated emotion detection
+- Export formats (PDF, CSV)
+
+## 🙏 Acknowledgments
+
+- MediaPipe for face tracking
+- Google Gemini / OpenAI for AI analysis
+- Next.js team for the excellent framework
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+#### 1. **"No AI API key found" Error**
+
+**Symptoms**: Error message in `/ask` page when trying to analyze
+
+**Solutions**:
+- ✅ **Local**: Check `.env.local` exists and contains `GEMINI_API_KEY` or `OPENAI_API_KEY`
+- ✅ **Local**: Restart dev server after adding env vars: `Ctrl+C` then `npm run dev`
+- ✅ **Vercel**: Go to Vercel dashboard → Project → Settings → Environment Variables
+- ✅ **Vercel**: Ensure variables are set for "Production", "Preview", and "Development"
+- ✅ **Vercel**: Redeploy after adding env vars (they don't auto-update)
+
+#### 2. **Camera/Screen Share Permissions Denied**
+
+**Symptoms**: Cannot access webcam or screen share
+
+**Solutions**:
+- ✅ Check browser permissions (Chrome: Settings → Privacy → Camera/Microphone)
+- ✅ Use HTTPS (Vercel provides this automatically)
+- ✅ For local dev: Use `localhost` (not `127.0.0.1`)
+- ✅ Try a different browser (Chrome/Edge recommended)
+
+#### 3. **Build Failures**
+
+**Symptoms**: `npm run build` fails or Vercel deployment fails
+
+**Solutions**:
+- ✅ Check Node.js version: `node --version` (should be 18+)
+- ✅ Delete `node_modules` and `.next`: 
+  ```powershell
+  Remove-Item -Recurse -Force node_modules, .next
+  npm install
+  npm run build
+  ```
+- ✅ Check TypeScript errors: `npm run build` shows exact errors
+- ✅ Ensure no syntax errors in recent changes
+
+#### 4. **No Data in Report/Analytics**
+
+**Symptoms**: Report page shows "No saved session" or empty charts
+
+**Solutions**:
+- ✅ Go to `/activity` or `/session`
+- ✅ Start tracking and let it run for 10+ seconds
+- ✅ Click "Save for Report" before navigating away
+- ✅ Check browser console for errors (F12)
+
 #### 5. **Charts Not Showing**
 
 **Symptoms**: Analytics page shows no charts

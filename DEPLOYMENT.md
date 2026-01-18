@@ -137,6 +137,7 @@ If you need to update API keys:
 
 ## 🐛 Troubleshooting
 
+
 ### Fixing /api/ask 404 on Vercel
 
 If `/api/ask` returns 404, the API route is not being deployed. This usually means the **Root Directory** is incorrect.
@@ -164,6 +165,7 @@ If `/api/ask` returns 404, the API route is not being deployed. This usually mea
 - Test `GET /api/ask` again - should return `{"ok": true, ...}`
 - Then test `POST /api/ask` from your frontend
 
+ main
 ### Build Fails on Vercel
 
 **Check**:
